@@ -367,39 +367,109 @@
             isSigned = false;
         }
 
-        function handleFormSubmit(e) {
-            e.preventDefault();
+   async function handleFormSubmit(e) {
+    e.preventDefault();
 
-            const errorMessage = document.getElementById('errorMessage');
-            errorMessage.classList.add('hidden');
+    const errorMessage = document.getElementById('errorMessage');
+    errorMessage.classList.add('hidden');
 
-            // Validate Signature
-            if (!isSigned) {
-                errorMessage.innerText = '서명란에 직접 서명을 완료해 주세요.';
-                errorMessage.classList.remove('hidden');
-                return;
+    // 서명 확인
+    if (!isSigned) {
+        errorMessage.innerText = '서명란에 직접 서명을 완료해 주세요.';
+        errorMessage.classList.remove('hidden');
+        return;
+    }
+
+    // 입력값 가져오기
+    const studentId = document.getElementById('studentId').value;
+    const studentName = document.getElementById('studentName').value;
+    const tshirtSize =
+        document.querySelector('input[name="tshirtSize"]:checked')?.value;
+
+    const loveReasons =
+        document.getElementById('loveReasons').value;
+
+    const songRequest =
+        document.getElementById('songRequest').value || '없음';
+
+    const signatureImgData =
+        canvas.toDataURL('image/png');
+
+    // 전송할 데이터
+    const data = {
+        studentId: studentId,
+        studentName: studentName,
+        tshirtSize: tshirtSize,
+        loveReasons: loveReasons,
+        songRequest: songRequest,
+        signature: signatureImgData
+    };
+
+    // 제출 버튼
+    const submitButton =
+        document.querySelector('#surveyForm button[type="submit"]');
+
+    const originalButtonHTML = submitButton.innerHTML;
+
+    submitButton.disabled = true;
+    submitButton.innerHTML =
+        '<i class="fa-solid fa-spinner fa-spin"></i><span> 제출 중...</span>';
+
+    try {
+
+        await fetch(
+            'https://script.google.com/macros/s/AKfycbyt_VH2RsR3FFgx4bttE9A1gwbYI-ujyuPjgrrCJan49p3RnY3Y4CVfkwPsDaUrRYh1/exec',
+            {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: {
+                    'Content-Type': 'text/plain;charset=utf-8'
+                },
+                body: JSON.stringify(data)
             }
+        );
 
-            // Get Form Data
-            const studentId = document.getElementById('studentId').value;
-            const studentName = document.getElementById('studentName').value;
-            const tshirtSize = document.querySelector('input[name="tshirtSize"]:checked')?.value;
-            const loveReasons = document.getElementById('loveReasons').value;
-            const songRequest = document.getElementById('songRequest').value || '없음';
-            const signatureImgData = canvas.toDataURL();
+        // 제출 완료 화면에 내용 표시
+        document.getElementById('summaryStudent').innerText =
+            `${studentId} ${studentName}`;
 
-            // Populate Summary Display
-            document.getElementById('summaryStudent').innerText = `${studentId} ${studentName}`;
-            document.getElementById('summarySize').innerText = tshirtSize;
-            document.getElementById('summarySong').innerText = songRequest;
-            document.getElementById('summaryLetter').innerText = loveReasons;
-            document.getElementById('summarySignature').src = signatureImgData;
+        document.getElementById('summarySize').innerText =
+            tshirtSize;
 
-            // Toggle Views
-            document.getElementById('surveyForm').classList.add('hidden');
-            document.getElementById('resultCard').classList.remove('hidden');
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
+        document.getElementById('summarySong').innerText =
+            songRequest;
+
+        document.getElementById('summaryLetter').innerText =
+            loveReasons;
+
+        document.getElementById('summarySignature').src =
+            signatureImgData;
+
+        // 완료 화면 표시
+        document.getElementById('surveyForm')
+            .classList.add('hidden');
+
+        document.getElementById('resultCard')
+            .classList.remove('hidden');
+
+        window.scrollTo({
+            top: 0,
+            behavior: 'smooth'
+        });
+
+    } catch (error) {
+
+        console.error(error);
+
+        errorMessage.innerText =
+            '제출 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.';
+
+        errorMessage.classList.remove('hidden');
+
+        submitButton.disabled = false;
+        submitButton.innerHTML = originalButtonHTML;
+    }
+}
     </script>
 </body>
 </html>
